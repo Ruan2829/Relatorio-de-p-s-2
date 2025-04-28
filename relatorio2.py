@@ -76,7 +76,7 @@ class PDF(FPDF):
             ["Elaborado por:", "Ruan Lopes da Silva", "12/04/2025"],
             ["Revisado por:", revisado_por_1, data_revisao],
             ["Revisado por:", revisado_por_2, data_revisao],
-            ["Aprovado por:", "", ""]
+            ["Aprovado por:", "Vinícius Pazzini", "28/04/2025"]
         ]
         for linha in linhas:
             self.cell(45, 10, linha[0], 1)
