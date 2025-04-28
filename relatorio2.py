@@ -770,7 +770,7 @@ def tabela_defeitos_interna(numero_pa):
             area = st.text_input(f"Área interna - {loc} (PÁ {numero_pa})", key=f"area_def_interna_pa{numero_pa}_{loc}")
 
         with col3:
-            cod_interno = st.text_input(f"Código interno - {loc} (PÁ {numero_pa})", key=f"cod_def_interna_pa{numero_pa}_{loc}")
+            cod_interno = st.text_input(f"Código - {loc} (PÁ {numero_pa})", key=f"cod_def_interna_pa{numero_pa}_{loc}")
 
         tabela.append({
             "Localizacao": loc,
