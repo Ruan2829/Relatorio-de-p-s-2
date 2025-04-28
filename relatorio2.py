@@ -7,7 +7,20 @@ from PIL import Image   # Biblioteca para manipulação de imagens
 # Configuração da página Streamlit
 st.set_page_config(page_title="Relatório de Inspeção", layout="centered")  # Título e layout da página
 st.title("📄 Relatório de Inspeção de Pás")  # Título principal
-
+st.markdown(
+    """
+    <style>
+    input {
+        background-color: white !important;
+        color: black !important;
+        border: 1px solid #000000 !important;
+        border-radius: 5px;
+        padding: 8px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 # Classe PDF personalizada
 class PDF(FPDF):
     def header(self):
