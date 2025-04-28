@@ -607,7 +607,7 @@ for loc in localizacoes:
         area = st.text_input(f"Área - {loc}", key=f"area_{loc}")
 
     with col3:
-        cod_cor = st.text_input(f"Cód./Cor - {loc}", key=f"cod_{loc}")
+        cod_cor = st.text_input(f"Código - {loc}", key=f"cod_{loc}")
 
     
     # Armazena os dados para o PDF
