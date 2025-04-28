@@ -210,9 +210,8 @@ class PDF(FPDF):
         for ref, desc, acao in referencias:
             self.set_font("Arial", "", 11)
             self.cell(20, 10, ref, border=1, align="C")
-            self.cell(20, 10, "", border=1, fill=True, align="C")
             self.cell(70, 10, desc, border=1, align="C")
-            self.cell(80, 10, acao, border=1, ln=True, align="C")
+            self.cell(100, 10, acao, border=1, ln=True, align="C")
 
 
 
