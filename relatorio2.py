@@ -7,20 +7,46 @@ from PIL import Image   # Biblioteca para manipulação de imagens
 # Configuração da página Streamlit
 st.set_page_config(page_title="Relatório de Inspeção", layout="centered")  # Título e layout da página
 st.title("📄 Relatório de Inspeção de Pás")  # Título principal
+
+# ------------------------------------ Estilo Streamlit ----------------------------------
 st.markdown(
     """
     <style>
+    /* Estilo geral dos campos de input */
     input {
-        background-color: white !important;
-        color: black !important;
-        border: 1px solid #000000 !important;
-        border-radius: 5px;
-        padding: 8px;
+        background-color: #ffffff !important;  /* branco */
+        color: #000000 !important;             /* texto preto */
+        border: 2px solid #4CAF50 !important;   /* borda verde bonito */
+        border-radius: 8px;                     /* cantos arredondados */
+        padding: 10px;                          /* espaço interno */
+        font-size: 16px;                        /* tamanho da fonte */
+    }
+
+    /* Estilo dos campos de texto (textarea) */
+    textarea {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        border: 2px solid #4CAF50 !important;
+        border-radius: 8px;
+        padding: 10px;
+        font-size: 16px;
+    }
+
+    /* Melhorando também os botões */
+    button[kind="primary"] {
+        background-color: #4CAF50 !important;  /* fundo verde */
+        color: white !important;               /* texto branco */
+        border: none !important;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-size: 16px;
     }
     </style>
     """,
     unsafe_allow_html=True
 )
+
+
 # Classe PDF personalizada
 class PDF(FPDF):
     def header(self):
