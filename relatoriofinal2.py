@@ -6,52 +6,6 @@ from PIL import Image   # Biblioteca para manipulação de imagens
 import base64 # Biblioteca para codificação e decodificação de dados binários
 from io import BytesIO # Biblioteca para manipulação de fluxos de bytes
 import requests
-import unicodedata
-import uuid  # no topo do seu script
-
-def limpar_key(texto):
-    texto = unicodedata.normalize("NFKD", texto).encode("ASCII", "ignore").decode("utf-8")
-    return texto.replace(" ", "_").replace(".", "_").replace("-", "_")
-
-def inserir_duas_imagens_mesmo_tamanho(pdf, imagem_paths, largura=90, altura=60, espacamento=10):
-    largura_total = len(imagem_paths) * largura + (len(imagem_paths) - 1) * espacamento
-    x_inicial = (210 - largura_total) / 2  # Centraliza na página A4 (largura = 210mm)
-    y_inicial = pdf.get_y()
-
-    for i, img_path in enumerate(imagem_paths[:2]):
-        if os.path.exists(img_path):
-            x = x_inicial + i * (largura + espacamento)
-            pdf.set_xy(x, y_inicial)
-            pdf.rect(x, y_inicial, largura, altura)  # Desenha a borda
-            pdf.image(img_path, x + 2, y_inicial + 2, w=largura - 4, h=altura - 4)
-
-    pdf.set_y(y_inicial + altura + 5)  # Move o cursor para baixo das imagens
-
-def inserir_topicos_fotos(pdf, imagens_obs, pa_num):
-    for titulo, (fotos, obs) in imagens_obs.items():
-        if fotos or obs:
-            pdf.set_font("Arial", "B", 12)
-            pdf.cell(0, 10, f"- {titulo}", ln=True)
-            pdf.ln(3)
-
-            caminhos_salvos = []
-            for i, foto in enumerate(fotos[:2]):
-                if foto:
-                    extensao = foto.type.split("/")[-1]
-                    nome_unico = f"foto_pa{pa_num}_{uuid.uuid4().hex[:8]}.{extensao}"
-                    with open(nome_unico, "wb") as f:
-                        f.write(foto.read())
-                    caminhos_salvos.append(nome_unico)
-
-            inserir_duas_imagens_mesmo_tamanho(pdf, caminhos_salvos)
-
-            for caminho in caminhos_salvos:
-                os.remove(caminho)
-
-            pdf.set_font("Arial", "I", 11)
-            pdf.multi_cell(0, 8, f"Observações: {obs or '-'}")
-            pdf.ln(10)
-
 
 # -------------------- Baixar imagens do GitHub (se não existirem localmente) --------------------
 
@@ -62,7 +16,7 @@ IMAGENS = {
     "assets/wind_turbine_draw.png": "https://raw.githubusercontent.com/Ruan2829/Relatoriodepa3/main/assets/wind_turbine_draw.png",
 }
 
-#----------------- Cria a pasta 'assets' local se ainda não existir -------------------------
+# Cria a pasta 'assets' local se ainda não existir
 os.makedirs("assets", exist_ok=True)
 
 # Faz o download das imagens apenas se ainda não estiverem salvas localmente
@@ -78,7 +32,7 @@ for caminho_local, url_github in IMAGENS.items():
 
 
 
-# -------------------------- Configuração da página Streamlit----------------------------------
+# Configuração da página Streamlit
 st.set_page_config(page_title="Relatório de Inspeção", layout="centered")  # Título e layout da página
 st.title("📄 Relatório de Inspeção de Pás")  # Título principal
 
@@ -121,7 +75,7 @@ st.markdown(
 )
 
 
-# ------------------------Classe PDF personalizada---------------------------
+# Classe PDF personalizada
 class PDF(FPDF):
     def header(self):
         # Verifica se o arquivo da logo existe e insere a imagem no canto superior esquerdo (x=10, y=10, largura=30mm)
@@ -134,13 +88,14 @@ class PDF(FPDF):
         self.set_xy(10, 10)                       # Define a posição (x=40, y=10) para o título
         self.set_font("Arial", "B", 16)           # Define a fonte Arial, negrito, tamanho 12
         self.cell(190, 40, "Relatório de Inspeção de Pás", border=1, ln=1, align="C")  # Linha 1 do título centralizada
-        self.ln(2)                            # Adiciona uma quebra de linha após o título
+        self.ln(5)                            # Adiciona uma quebra de linha após o título
 
+        self.ln(5)
 # ------------------------------------ Rodapé do PDF Com imagem -------------------------------------
     def footer(self):
         # Adiciona imagem no canto inferior esquerdo
         if os.path.exists("assets/wind_turbine_draw.png"):
-            self.image("assets/wind_turbine_draw.png", x=10, y=270, w=40) # x=10, y=260, largura=40mm
+            self.image("assets/wind_turbine_draw.png", x=10, y=260, w=40)
 
   # Ajuste 'x', 'y' e 'w' conforme o necessário
 
@@ -159,7 +114,7 @@ class PDF(FPDF):
         self.set_y(-10)  # Ajusta posição
         self.cell(0, 10, f"Página {self.page_no()} de {{nb}}", align="R") # adiciona um rodapé ao documento, mostrando o número da página atual e o total de páginas, como por exemplo: "Página 3 de 10"
 
-# -----------------------------------Área Departamento Responsável --------------------------
+# ------------------------------------------- Área Departamento Responsável --------------------------
 
     def primeira_pagina(self, ambito_aplicacao, codigo_relatorio, revisado_por_1, revisado_por_2, data_revisao):
         self.set_font("Arial", "B", 12)
@@ -264,9 +219,12 @@ class PDF(FPDF):
         self.cell(0, 10, "5. Nomenclaturas", ln=True)
         if os.path.exists("assets/nomenclaturas.png"):
             self.image("assets/nomenclaturas.png", x=10, w=190)
+
+
         else:
             self.set_font("Arial", "I", 11)
             self.multi_cell(0, 10, "Imagem de nomenclaturas não encontrada.")
+
 
 
   # -------------- 6. Itens das Pás a Serem Inspecionados -----------------------------
@@ -276,6 +234,7 @@ class PDF(FPDF):
         self.set_font("Arial", "B", 12)
         self.cell(0, 10, "6. Itens das Pás a Serem Inspecionados", ln=True)
 
+        
         itens = [
             ("Extradorso", "E.D."),
             ("Intradorso", "I.D"),
@@ -307,11 +266,13 @@ class PDF(FPDF):
             ("4", "Danos Críticos", "Parar o aerogerador")
         ]
 
+    
         for ref, desc, acao in referencias:
             self.set_font("Arial", "", 11)
             self.cell(20, 10, ref, border=1, align="C")
             self.cell(70, 10, desc, border=1, align="C")
             self.cell(100, 10, acao, border=1, ln=True, align="C")
+
 
 
  #-------------- 8. Identificação da Máquina ----------------------------------------------------------
@@ -372,9 +333,10 @@ class PDF(FPDF):
 
     #----------------------- 10. Expeção externa e 10.1 Classificação de Defeitos Pa1, Pa2 e Pa3 -------------------
 
-
+    
     def pagina_inspecao_externa(self, numero_pa, tabela): 
         self.add_page()
+
         self.set_font("Arial", "B", 12)
         self.cell(0, 10, "10. Inspeção Externa", ln=True)
         self.ln(2)
@@ -395,9 +357,11 @@ class PDF(FPDF):
             self.cell(70, 10, linha["Descricao"], border=1)
             self.cell(30, 10, linha["Area"], border=1)
             self.cell(40, 10, linha["Código"], border=1, ln=True)
+            self.ln(0)  # Adiciona um espaço entre as linhas da tabela
 
 
     def pagina_inspecao_fotos(self, numero_pa, imagens_obs): 
+        #self.add_page()
         self.set_font("Arial", "B", 12)
 
         topicos = [
@@ -411,25 +375,119 @@ class PDF(FPDF):
         ]
 
         for i, (titulo, qtd_max) in enumerate(topicos):
-            imagens, obs = imagens_obs.get(titulo, ([], ""))
-            altura_necessaria = self.altura_topico_completo(len(imagens[:qtd_max])) + 13  # inclui altura do título
-            espaco_disponivel = self.h - self.get_y() + 60  # margem inferior, considera espaço do rodapé
-
-            if altura_necessaria > espaco_disponivel:
-                self.add_page()
-
-            self.set_font("Arial", "B", 12)
             self.cell(0, 10, f"10.{numero_pa}.{i+1} {titulo}", ln=True)
             self.ln(3)
+            imagens, obs = imagens_obs.get(titulo, ([], ""))
             self._inserir_imagens_com_obs(imagens, obs, max_img=qtd_max)
+
+
+    def pagina_inspecao_externa_pa1(self, tabela_pa1):
+        self.add_page()
+        self.set_font("Arial", "B", 12)
+        self.cell(0, 10, "10. Inspeção Externa", ln=True)
+        self.ln(3)
+
+        self.set_font("Arial", "B", 11)
+        self.cell(0, 10, "10.1. Classificação de defeitos evidenciados na área externa da pá 1", ln=True)
+        self.ln(5)
+
+        # Cabeçalhos da tabela
+        self.set_font("Arial", "B", 10)
+        self.cell(50, 10, "Localização", border=1, align="C")
+        self.cell(70, 10, "Descrição dos danos/ evidências", border=1, align="C")
+        self.cell(30, 10, "Área", border=1, align="C")
+        self.cell(40, 10, "Código", border=1, ln=True, align="C")
+
+        # Linhas da tabela preenchidas a partir do dicionário
+        self.set_font("Arial", "", 10)
+        for linha in tabela_pa1:
+            self.cell(50, 10, linha["Localizacao"], border=1)
+            self.cell(70, 10, linha["Descricao"], border=1)
+            self.cell(30, 10, linha["Area"], border=1)
+            self.cell(40, 10, linha["Código"], border=1, ln=True)
+
+    def pagina_inspecao_externa_pa2(self, tabela_pa2):
+        self.add_page()
+        self.set_font("Arial", "B", 12)
+        self.cell(0, 10, "10.2. Classificação de defeitos evidenciados na área externa da pá 2", ln=True)
+        self.ln(5)
+
+        self.set_font("Arial", "B", 10)
+        self.cell(50, 10, "Localização", border=1)
+        self.cell(70, 10, "Descrição dos danos/ evidências", border=1)
+        self.cell(30, 10, "Área", border=1)
+        self.cell(40, 10, "Código", border=1, ln=True)
+
+        self.set_font("Arial", "", 10)
+        for linha in tabela_pa2:
+            self.cell(50, 10, linha["Localizacao"], border=1)
+            self.cell(70, 10, linha["Descricao"], border=1)
+            self.cell(30, 10, linha["Area"], border=1)
+            self.cell(40, 10, linha["Código"], border=1, ln=True)
+
+    def pagina_inspecao_externa_pa3(self, tabela_pa3):
+        self.add_page()
+        self.set_font("Arial", "B", 12)
+        self.cell(0, 10, "10.3. Classificação de defeitos evidenciados na área externa da pá 3", ln=True)
+        self.ln(5)
+
+        self.set_font("Arial", "B", 10)
+        self.cell(50, 10, "Localização", border=1)
+        self.cell(70, 10, "Descrição dos danos/ evidências", border=1)
+        self.cell(30, 10, "Área", border=1)
+        self.cell(40, 10, "Código", border=1, ln=True)
+
+        self.set_font("Arial", "", 10)
+        for linha in tabela_pa3:
+            self.cell(50, 10, linha["Localizacao"], border=1)
+            self.cell(70, 10, linha["Descricao"], border=1)
+            self.cell(30, 10, linha["Area"], border=1)
+            self.cell(40, 10, linha["Código"], border=1, ln=True)
+
+
+    def _inserir_imagens_com_obs(self, lista_imagens, observacao, max_img=2):
+        largura_img = 90  # Largura de cada imagem
+        altura_img = 60   # Altura de cada imagem
+        espacamento = 10  # Espaço horizontal entre imagens
+
+        x_inicial = 10  # Margem esquerda
+        y_inicial = self.get_y()  # Posição vertical atual
+
+        # Posiciona cada imagem lado a lado
+        for i, img_path in enumerate(lista_imagens[:max_img]):
+            if os.path.exists(img_path):
+                x = x_inicial + i * (largura_img + espacamento)  # Calcula a posição X de cada imagem
+                self.set_xy(x, y_inicial)  # Define a posição
+                self.rect(x, y_inicial, largura_img, altura_img)  # Desenha borda
+                self.image(img_path, x + 2, y_inicial + 2, w=largura_img - 4, h=altura_img - 4)  # Insere imagem dentro da borda
+
+        # Após todas as imagens, pula para linha de baixo
+        self.set_y(y_inicial + altura_img + 5)
+
+        self.set_font("Arial", "I", 11)
+        self.multi_cell(0, 8, f"Observações: {observacao or '-'}")
+        self.ln(10)
 
 
     def pagina_inspecao_completa_pa(self, numero_pa, tabela, imagens_obs):
         self.pagina_inspecao_externa(numero_pa, tabela)
         self.pagina_inspecao_fotos(numero_pa, imagens_obs)
 
+        topicos = [
+            ("Superfície da pá lado sucção", 2),
+            ("Receptores do SPDA lado sucção", 2),
+            ("B.A lado da sucção", 2),
+            ("Superfície do B.A", 4),
+            ("Superfície da pá lado da pressão", 4),
+            ("Receptores do SPDA lado da pressão", 2),
+            ("Superfície no B.A lado da pressão", 2),
+        ]
 
-
+        for i, (titulo, max_img) in enumerate(topicos):
+            self.cell(0, 10, f"10.{numero_pa}.{i+1} {titulo}", ln=True)
+            self.ln(3)
+            imagens, obs = imagens_obs.get(titulo, ([], ""))
+            self._inserir_imagens_com_obs(imagens, obs, max_img=max_img)
 
 # ------------------------ 11. Inspeção Interna -------------------------------------
 
@@ -494,25 +552,12 @@ class PDF(FPDF):
         ]
 
         for i, titulo in enumerate(topicos):
-            imagens, obs = imagens_obs.get(titulo, ([], ""))
-            altura_necessaria = self.altura_topico_completo(len(imagens[:2]))
-            espaco_disponivel = self.h - self.get_y() - 30  # considera espaço do rodapé
-
-            if altura_necessaria > espaco_disponivel:
-                self.add_page()
-
             self.set_font("Arial", "B", 11)
             self.cell(0, 10, titulo, ln=True)
             self.ln(3)
+
+            imagens, obs = imagens_obs.get(titulo, ([], ""))
             self._inserir_imagens_com_obs(imagens, obs, max_img=2)
-
-
-
-    def altura_topico_completo(self, num_imagens):
-        altura_img = 60
-        altura_obs = 8 * 3  # assume 3 linhas
-        margem_extra = 20   # margem após observação
-        return altura_img + altura_obs + margem_extra
 
 
 
@@ -523,7 +568,7 @@ st.subheader("📄 Dados da Capa do Relatório")
 
 ambito_aplicacao = st.text_input("Âmbito da Aplicação:", value="Complexo Eólico Cutia - WTG SM2-09")
 codigo_relatorio = st.text_input("Código do Relatório:", value="IQONY-INSP-01")
-revisado_por_1 = st.text_input("Revisado por (1ª Revisão):", value="")
+revisado_por_1 = st.text_input("Revisado por (1ª Revisão):", value="Ruan Lopes da Silva")
 revisado_por_2 = st.text_input("Revisado por (2ª Revisão):", value="")
 data_revisao = st.text_input("Data da Revisão:", value="12/04/2025")
 
@@ -546,50 +591,55 @@ dispositivos_luz = st.text_input("Dispositivos de iluminação:")
 
 #-------------------------------------- Inputs Nomenclaturas -------------------------------------
 # 📸 SEÇÃO 8 – IDENTIFICAÇÃO DA MÁQUINA
-
-
 st.subheader("📸 8. Identificação da Máquina")
+
 with st.container():
     st.markdown("**📷 Envie uma imagem de identificação do Aerogerador**")
-
+    
     imagem_maquina = st.file_uploader(
-        "Selecione a imagem (PNG ou JPG)",
+        "Selecione a imagem (PNG ou JPG)", 
+        type=["jpg", "jpeg", "png"]
     )
 
     imagem_maquina_path = None
     if imagem_maquina:
-        extensao = imagem_maquina.name.split(".")[-1].lower()  # 🔄 Usa o nome do arquivo e converte para minúsculo
+        # Detecta a extensão correta a partir do tipo MIME
+        extensao = imagem_maquina.type.split("/")[-1]
         imagem_maquina_path = f"imagem_maquina.{extensao}"
 
+        # Salva o arquivo corretamente com a extensão original
         with open(imagem_maquina_path, "wb") as f:
             f.write(imagem_maquina.read())
 
         # Mostra imagem carregada abaixo
         #st.image(imagem_maquina, caption="Imagem carregada", use_column_width=True)
 
-# -------------------------- Especificação e identificação das pás ---------------------------------------------------------
 st.subheader("📷 9. Especificação e Identificação das Pás")
 
 imagens_pás = {}
-for i in range(1, 4):
-    with st.container():
-        st.markdown(f"### 📌 PÁ {i}")
-        fotos = st.file_uploader(
-            f"Envie até 2 fotos para PÁ {i}",
-            accept_multiple_files=True,
-            key=f"fotos_pa_{i}"
+
+# Loop para as 3 pás
+for i in range(1, 4):  # Loop de 1 a 3 para as pás
+    with st.container():  # Cria um container para cada pá
+        st.markdown(f"### 📌 PÁ {i}")  # Título para cada pá
+        fotos = st.file_uploader(  # Carrega as fotos da pá
+            f"Envie até 2 fotos para a PÁ {i}",  # Título do uploader
+            type=["jpg", "jpeg", "png"],  # Tipo de arquivo aceito
+            accept_multiple_files=True,  # Aceita múltiplos arquivos
+            key=f"foto_pa_{i}"  # Chave única para cada pá
         )
 
-        caminhos = []
-        for j, foto in enumerate(fotos[:2]):
-            extensao = foto.type.split("/")[-1]
-            nome_limpo = limpar_key(f"foto_pa_{i}_{j}")
-            caminho = f"{nome_limpo}.{extensao}"
-            with open(caminho, "wb") as f:
-                f.write(foto.read())
-            caminhos.append(caminho)
+        caminhos = []  # Lista para armazenar os caminhos das fotos
+        for j, foto in enumerate(fotos[:2]):  # Limita a 2 fotos
+            extensao = foto.type.split("/")[-1]  # Detecta a extensão correta
+            caminho = f"foto_pa_{i}_{j}.{extensao}"  # Cria o caminho do arquivo
+            with open(caminho, "wb") as f:  # Abre o arquivo para escrita
+                f.write(foto.read())  # Salva o arquivo
+            caminhos.append(caminho)  # Adiciona o caminho à lista
 
-        imagens_pás[f"PÁ {i}"] = caminhos
+        imagens_pás[f"PÁ {i}"] = caminhos  # Guarda os caminhos por pá
+
+    
 
 
 # ------------------------ Inputs Inspeção Externa -------------------------------------
@@ -628,7 +678,6 @@ for loc in localizacoes:
 
 st.markdown("---") # Linha de separação
 
-# ------------------------------ pá 2 exterma --------------------------------------------
 st.subheader("🔍 10.2 Inspeção Externa - Classificação de Defeitos (PÁ 2)")
 
 tabela_externa_pa2 = []
@@ -654,7 +703,7 @@ for loc in localizacoes:
         "Código": cod_cor
     })
 
-#---------------------------------------- pá 3 -------------------------------------------
+
 st.subheader("🔍 10.3 Inspeção Externa - Classificação de Defeitos (PÁ 3)")
 
 tabela_externa_pa3 = []
@@ -686,7 +735,6 @@ for loc in localizacoes:
 # 📸 INSPEÇÃO EXTERNA - NOVO MODELO
 
 # --- Inspeção Externa - PÁ 1 ---
-
 st.subheader("🔍 10.1 Inspeção Externa - PÁ 1")
 
 topicos_externa = [
@@ -709,24 +757,14 @@ imagens_obs_externa_pa1 = {}
 
 for topico in topicos_selecionados_pa1:
     st.markdown(f"### 📸 {topico} (PÁ 1)")
-    
-    key_foto = limpar_key(f"fotos_externa_pa1_{topico}")
-    fotos = st.file_uploader(
-        f"Envie até 2 fotos para '{topico}' (PÁ 1)",
-
-        accept_multiple_files=True,
-        key=key_foto
-    )
-
-
-    key_obs = limpar_key(f"obs_externa_pa1_{topico}")
-    obs = st.text_area(f"Observações sobre '{topico}' (PÁ 1)", key=key_obs)
-
+    fotos = st.file_uploader(f"Envie até 2 fotos para '{topico}' (PÁ 1)", 
+                             type=["jpg", "jpeg", "png"], 
+                             accept_multiple_files=True, 
+                             key=f"fotos_externa_pa1_{topico}")
+    obs = st.text_area(f"Observações sobre '{topico}' (PÁ 1)", key=f"obs_externa_pa1_{topico}")
     imagens_obs_externa_pa1[topico] = (fotos, obs)
 
-
-# ------------------------------------ Inspeção Externa - PÁ 2 ---------------------------------
-
+# --- Inspeção Externa - PÁ 2 ---
 st.subheader("🔍 10.2 Inspeção Externa - PÁ 2")
 
 topicos_selecionados_pa2 = st.multiselect(
@@ -739,23 +777,14 @@ imagens_obs_externa_pa2 = {}
 
 for topico in topicos_selecionados_pa2:
     st.markdown(f"### 📸 {topico} (PÁ 2)")
-
-    key_foto = limpar_key(f"fotos_externa_pa2_{topico}")
-    fotos = st.file_uploader(
-        f"Envie até 2 fotos para '{topico}' (PÁ 2)",
-  
-        accept_multiple_files=True,
-        key=key_foto
-    )
-
-
-    key_obs = limpar_key(f"obs_externa_pa2_{topico}")
-    obs = st.text_area(f"Observações sobre '{topico}' (PÁ 2)", key=key_obs)
-
+    fotos = st.file_uploader(f"Envie até 2 fotos para '{topico}' (PÁ 2)", 
+                             type=["jpg", "jpeg", "png"], 
+                             accept_multiple_files=True, 
+                             key=f"fotos_externa_pa2_{topico}")
+    obs = st.text_area(f"Observações sobre '{topico}' (PÁ 2)", key=f"obs_externa_pa2_{topico}")
     imagens_obs_externa_pa2[topico] = (fotos, obs)
 
-# ------------------- pa 3 ------------------
-
+# --- Inspeção Externa - PÁ 3 ---
 st.subheader("🔍 10.3 Inspeção Externa - PÁ 3")
 
 topicos_selecionados_pa3 = st.multiselect(
@@ -768,18 +797,11 @@ imagens_obs_externa_pa3 = {}
 
 for topico in topicos_selecionados_pa3:
     st.markdown(f"### 📸 {topico} (PÁ 3)")
-
-    key_foto = limpar_key(f"fotos_externa_pa3_{topico}")
-    fotos = st.file_uploader(
-        f"Envie até 2 fotos para '{topico}' (PÁ 3)", 
-         
-        accept_multiple_files=True, 
-        key=key_foto
-    )
-
-    key_obs = limpar_key(f"obs_externa_pa3_{topico}")
-    obs = st.text_area(f"Observações sobre '{topico}' (PÁ 3)", key=key_obs)
-
+    fotos = st.file_uploader(f"Envie até 2 fotos para '{topico}' (PÁ 3)", 
+                             type=["jpg", "jpeg", "png"], 
+                             accept_multiple_files=True, 
+                             key=f"fotos_externa_pa3_{topico}")
+    obs = st.text_area(f"Observações sobre '{topico}' (PÁ 3)", key=f"obs_externa_pa3_{topico}")
     imagens_obs_externa_pa3[topico] = (fotos, obs)
 
           
@@ -826,39 +848,24 @@ topicos_interna = [
 
 # Bloco dinâmico para fotos e observações por PÁ
 
-
 def bloco_inspecao_interna(pa_num):
     st.subheader(f"📷 11.3 Itens com evidências fotográficas - PÁ {pa_num}")
     imagens_obs = {}
-
     topicos_selecionados = st.multiselect(
         f"Selecione os tópicos com problemas (PÁ {pa_num} - interna):",
-        topicos_interna, 
-        key=limpar_key(f"topicos_interna_pa{pa_num}")
+        topicos_interna, key=f"topicos_interna_pa{pa_num}"
     )
-
     for topico in topicos_selecionados:
         st.markdown(f"### 📸 {topico} (PÁ {pa_num})")
-
-        key_foto = limpar_key(f"fotos_interna_pa{pa_num}_{topico}")
         fotos = st.file_uploader(
             f"Envie até 2 fotos para '{topico}' (PÁ {pa_num})",
-        
+            type=["jpg", "jpeg", "png"],
             accept_multiple_files=True,
-            key=key_foto
+            key=f"fotos_interna_pa{pa_num}_{topico}"
         )
-
-        key_obs = limpar_key(f"obs_interna_pa{pa_num}_{topico}")
-        obs = st.text_area(
-            f"Observações sobre '{topico}' (PÁ {pa_num})",
-            key=key_obs
-        )
-
+        obs = st.text_area(f"Observações sobre '{topico}' (PÁ {pa_num})", key=f"obs_interna_pa{pa_num}_{topico}")
         imagens_obs[topico] = (fotos, obs)
-
     return imagens_obs
-
-
 
 #------------------------ Inspeção Interna - PÁ 1 ----------------------------
 # PDF - Tabelas + Fotos
@@ -894,29 +901,26 @@ def inserir_topicos_fotos(pdf, imagens_obs, pa_num):
             x_inicial = 10  # Começar um pouco da margem
             y_inicial = pdf.get_y()
 
-
             for i, foto in enumerate(fotos[:2]):
                 if foto:
                     extensao = foto.type.split("/")[-1]
-                    nome_unico = f"foto_pa{pa_num}_{uuid.uuid4().hex[:8]}.{extensao}"
-                    with open(nome_unico, "wb") as f:
+                    caminho_temp = f"temp_interna_pa{pa_num}_{i}.{extensao}".replace(" ", "_")
+                    with open(caminho_temp, "wb") as f:
                         f.write(foto.read())
-    
 
                     # Posiciona corretamente a imagem lado a lado
                     x = x_inicial + i * (largura_img + espacamento)
                     pdf.set_xy(x, y_inicial)
                     pdf.rect(x, y_inicial, largura_img, altura_img)
-                    pdf.image(nome_unico, x + 2, y_inicial + 2, w=largura_img - 4, h=altura_img - 4)
-                    os.remove(nome_unico)
+                    pdf.image(caminho_temp, x + 2, y_inicial + 2, w=largura_img - 4, h=altura_img - 4)
 
+                    os.remove(caminho_temp)
 
             pdf.set_y(y_inicial + altura_img + 5)  # Move para baixo depois das imagens
 
             pdf.set_font("Arial", "I", 11)
             pdf.multi_cell(0, 8, f"Observações: {obs or '-'}")
-            pdf.ln(30)  # Aumenta o espaçamento entre os tópicos (corrigindo o problema das fotos no rodapé)
-
+            pdf.ln(10)
 
 
 
@@ -968,12 +972,8 @@ if st.button("📄 Gerar Relatório em PDF"):
 
     # ----------------- Inspeção Externa -----------------
     pdf.add_page()
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 10, "10. Inspeção Externa", ln=True)
-    pdf.ln(2)
     gerar_tabela_defeitos(pdf, "10.1 Classificação de defeitos evidenciados na área externa da pá 1", tabela_externa_pa1)
-    inserir_topicos_fotos(pdf, imagens_obs_externa_pa1, 1)  
-
+    inserir_topicos_fotos(pdf, imagens_obs_externa_pa1, 1)
 
     pdf.add_page()
     gerar_tabela_defeitos(pdf, "10.2 Classificação de defeitos evidenciados na área externa da pá 2", tabela_externa_pa2)
@@ -985,12 +985,8 @@ if st.button("📄 Gerar Relatório em PDF"):
 
     # ----------------- Inspeção Interna -----------------
     pdf.add_page()
-    pdf.set_font("Arial", "B", 12)
-    pdf.cell(0, 10, "11. Inspeção Interna", ln=True)
-    pdf.ln(2)
     gerar_tabela_defeitos(pdf, "11.2 Classificação de defeitos evidenciados na área interna da pá 1", tabela_defeitos_pa1)
     inserir_topicos_fotos(pdf, imagens_obs_interna_pa1, 1)
-
 
     pdf.add_page()
     gerar_tabela_defeitos(pdf, "11.2 Classificação de defeitos evidenciados na área interna da pá 2", tabela_defeitos_pa2)
